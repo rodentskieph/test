@@ -104,7 +104,8 @@ In Tinkercad, open the **Code** panel, switch the editor from **Blocks** to **Te
 
 #include <Keypad.h>
 #include <Servo.h>
-#include <Adafruit_LiquidCrystal.h>
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
 
 // ---------- Keypad setup ----------
 const byte ROWS = 4;
@@ -123,7 +124,7 @@ byte colPins[COLS] = {5, 4, 3, 2};
 Keypad keypad = Keypad(makeKeymap(keys), rowPins, colPins, ROWS, COLS);
 
 // ---------- Other components ----------
-Adafruit_LiquidCrystal lcd(0);   // I2C LCD at the default address
+LiquidCrystal_I2C lcd(0x20, 16, 2);   // I2C address, 16 columns, 2 rows
 Servo lockServo;
 
 const int SERVO_PIN  = 10;
@@ -259,8 +260,8 @@ void setup() {
   lockServo.write(LOCKED_ANGLE);
   digitalWrite(RED_LED, HIGH);
 
-  lcd.begin(16, 2);
-  lcd.setBacklight(1);
+  lcd.init();
+  lcd.backlight();
 
   showMessage("Keypad Lock", "Starting...");
   delay(1000);
@@ -301,7 +302,7 @@ void loop() {
 
 ### How It Works
 
-The `Keypad` library scans the 4×4 keypad by turning on one row at a time and checking which column connects to it, then returns the character from the `keys` map. Each digit is added to the `input` string, and the LCD shows one `*` per digit. When `#` is pressed, `checkPin()` compares `input` with `PASSWORD`. If they match, the servo turns to 90°, the green LED turns on, and the time is saved with `millis()` so the door can lock itself after 5 seconds. If they don't match, `wrongAttempts` goes up by one, and after 3 wrong tries the `lockout()` function shows a 10-second countdown while ignoring the keypad. The I2C LCD only needs two data pins (A4 and A5), which leaves enough digital pins for the keypad, servo, LEDs, and buzzer.
+The `Keypad` library scans the 4×4 keypad by turning on one row at a time and checking which column connects to it, then returns the character from the `keys` map. Each digit is added to the `input` string, and the LCD shows one `*` per digit. When `#` is pressed, `checkPin()` compares `input` with `PASSWORD`. If they match, the servo turns to 90°, the green LED turns on, and the time is saved with `millis()` so the door can lock itself after 5 seconds. If they don't match, `wrongAttempts` goes up by one, and after 3 wrong tries the `lockout()` function shows a 10-second countdown while ignoring the keypad. The `LiquidCrystal_I2C` library controls the LCD over I2C, so it only needs two data pins (A4 and A5), which leaves enough digital pins for the keypad, servo, LEDs, and buzzer.
 
 ---
 
@@ -315,7 +316,7 @@ The `Keypad` library scans the 4×4 keypad by turning on one row at a time and c
 6. Type a few digits, press `*`, and check that the input is cleared.
 7. Unlock the door again, then press `D` and check that it locks immediately.
 
-**Tip:** If the LCD stays blank, make sure you used the **LCD 16 x 2 (I2C)** component and that SDA goes to A4 and SCL goes to A5.
+**Tip:** If the LCD stays blank, make sure you used the **LCD 16 x 2 (I2C)** component and that SDA goes to A4 and SCL goes to A5. Then click the LCD and check its I2C address in the Inspector panel. The code uses `0x20` (32), which is the Tinkercad default. If your LCD shows a different address, such as `0x27`, change the number in `LiquidCrystal_I2C lcd(0x20, 16, 2);` to match.
 
 ---
 
